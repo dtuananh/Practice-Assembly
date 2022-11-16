@@ -105,12 +105,10 @@ bigsum:
 	mov esi, [ebp + 8]		;offset num1
 	mov edi, [ebp + 12]		;offset num2
 
-xor eax, eax
 	push esi
 	call strlen
 	mov [ebp - 4], eax		;len1
 
-xor eax, eax
 	push edi
 	call strlen
 	mov [ebp - 8], eax		;len2
@@ -220,7 +218,6 @@ WriteString:
     mov ebp, esp
     pushad
 
-xor eax,eax
     mov esi, [ebp + 8]
     push esi
     call strlen
@@ -242,7 +239,7 @@ strlen:
     push edi
     
     mov edi, [ebp + 8]
-    mov ecx, 0
+    mov eax, 0
 .L1:
     cmp byte [edi], 0
     je .L2
@@ -264,29 +261,29 @@ atoi:
    ; int result = 0
    mov eax, 0              ; Set initial total to 0
      
-convert:
+.convert:
    ;mov input[i] to esi 
    movzx esi, byte [edi]   ; Get the current character
-   cmp esi, 0x0A          ; Check for \n
-   je done
+   cmp esi, 0Ah          ; Check for \n
+   je .done
    test esi, esi           ; Check for end of string 
-   je done
+   je .done
    
-   cmp esi, 48             ; Anything less than 0 is invalid
-   jl error
+   cmp esi, 30h             ; Anything less than 0 is invalid
+   jl .error
     
-   cmp esi, 57             ; Anything greater than 9 is invalid
-   jg error
+   cmp esi, 39h          	; Anything greater than 9 is invalid
+   jg .error
    
-   sub esi, 48             ; Convert from ASCII to decimal 
+   sub esi, 30h             ; Convert from ASCII to decimal 
    imul eax, 10            ; Multiply total by 10
    add eax, esi            ; Add current digit to total
     
    inc edi                 ; Get the address of the next character
-   jmp convert
+   jmp .convert
 
-error:
+.error:
    mov eax, -1             ; Return -1 on error
  
-done:
+.done:
    ret                     ; Return total or error code
