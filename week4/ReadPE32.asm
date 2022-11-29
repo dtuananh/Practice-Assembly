@@ -121,8 +121,6 @@ MAXBUF EQU 255
 	lpBufferAddress dd ?
 	bRead dd ?
 
-	e_fileAddress dd ?
-
 	hex db MAXBUF DUP(?)
 
 	sectionSize dd ?
@@ -1061,7 +1059,7 @@ main endp
 
 
 
-RVAtoOffset proc		;RVAtoOffset (&SectionHeaders, NumOfSections, RVA)
+RVAtoOffset proc		;RVAtoOffset (RVA)
 	push ebp
 	mov ebp, esp
 	push ecx
@@ -1087,7 +1085,7 @@ section_loop:
 	mov eax, dword ptr [edx + 12]		
 	sub edi, eax		;edi = RVA - VirtualAdress
 	mov eax, dword ptr [edx + 14h]			;eax = PoiterToRawDaTa
-	add eax, edi			;eax += edi
+	add eax, edi			;result = eax + edi
 	jmp finished
 
 	next_section:
