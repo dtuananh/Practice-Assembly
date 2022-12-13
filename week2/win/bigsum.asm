@@ -1,9 +1,13 @@
 .386
 .model	flat, stdcall
 .stack	4096
-ExitProcess proto, dwExitCode:dword
+option casemap:none
 
-include Irvine32.inc
+include windows.inc
+include user32.inc
+include kernel32.inc
+
+MAXBUF EQU 20
 
 .data
 	msg1 byte "Num1 = ", 0
@@ -14,24 +18,25 @@ include Irvine32.inc
 	num2 byte 20 dup(0), 0
 	sum byte 21 dup(0), 0
 
+	hInput HANDLE ?
+	hOutput HANDLE ?
 
 .code
 main proc
-	mov edx, offset msg1
+	call GetHandle	
+	push offset msg1
 	call WriteString
 
-	mov edx, offset num1
-	mov ecx, sizeof num1
+	push offset num1
 	call ReadString
 	
-	mov edx, offset msg2
+	push offset msg2
 	call WriteString
 
-	mov edx, offset num2
-	mov ecx, sizeof num2
+	push offset num2
 	call ReadString
 
-	mov edx, offset msg3
+	push offset msg3
 	call WriteString
 
 	push offset sum
@@ -39,10 +44,10 @@ main proc
 	push offset num1
 	call calc
 
-	mov edx, eax
+	push eax
 	call WriteString
 
-	mov ecx, 0
+	push 0
 	call ExitProcess
 
 main endp
@@ -147,6 +152,78 @@ L7:
 calc endp
 
 
+GetHandle proc 
+	push STD_INPUT_HANDLE 
+	call GetStdHandle 
+	mov hInput, eax 
+
+	push STD_OUTPUT_HANDLE
+	call GetStdHandle
+	mov hOutput, eax 
+	ret
+GetHandle endp 
+
+
+ReadString proc 
+	push ebp
+	mov ebp, esp
+	sub esp,4 
+	pushad 
+
+	push NULL					; pInputControl = NULL 
+	lea ebx, dword ptr [ebp - 4]	
+	push ebx 					; lpNumberOfCharsRead = ebp - 4
+	push MAXBUF 				; nNumberOfCharsToRead = MAXBUF 
+	push dword ptr [ebp + 8]	; lpBuffer = offset string 
+	push hInput 			; hConsoleInput = hInput
+	call ReadConsole 
+
+	;search line feed (0Dh) character and remove it 
+	mov edi, dword ptr [ebp + 8]
+	mov ecx, MAXBUF 
+	cld 						; search forward 
+	mov al, 0Dh 
+	repne scasb 
+	jne L2 						; if not found 0Dh 
+	;sub dword ptr [ebp - 4],2 	; 
+	dec edi 
+	jmp L3 
+L2:
+	mov edi, dword ptr [ebp + 8]
+	add edi, MAXBUF 
+L3:	mov byte ptr [edi], 0 		; add null byte 
+	
+	popad 
+	add esp, 4
+	pop ebp 
+	ret 4
+ReadString endp
+
+
+WriteString proc 
+	push ebp
+	mov ebp, esp 
+	sub esp, 4 
+	pushad 
+	;get length 
+	push dword ptr [ebp + 8]
+	call Strlen 
+
+	push NULL 						; lpReserved = NULL 
+	lea ebx, dword ptr [ebp - 4]	
+	push ebx 						; lpNumberOfCharsWritten = ebp - 4
+	push eax 						; nNumberOfCharsToWrite = eax = Str_length
+	push dword ptr [ebp + 8]		; lpBuffer = offset string 
+	push hOutput 				; hConsoleOutput = hOutput
+	call WriteConsole 				
+
+	popad 
+	add esp, 4
+	pop ebp 
+	ret 4
+WriteString endp 
+
+
 Strlen proc 
 	; return eax = length 
 	push ebp 
@@ -165,6 +242,6 @@ L2:
 	pop edi  
 	pop ebp 
 	ret 4
-Strlen endp 
+Strlen endp
 
 end main

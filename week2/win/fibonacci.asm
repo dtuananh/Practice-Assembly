@@ -1,9 +1,14 @@
 .386
 .model	flat, stdcall
 .stack	4096
-ExitProcess proto, dwExitCode:dword
+option casemap:none
 
-include Irvine32.inc
+include D:\masm32\include\windows.inc
+include D:\masm32\include\kernel32.inc 
+include D:\masm32\include\user32.inc 
+
+includelib D:\masm32\lib\kernel32.lib 
+includelib D:\masm32\lib\user32.lib 
 
 MAXBUF EQU 20
 
@@ -11,29 +16,33 @@ MAXBUF EQU 20
 	msg1 byte "N = ", 0
 	msg2 byte "N so Fibonacci dau tien: ", 0
 	
-	num dword ?
+	num byte 10 dup(?), 0
 
 	white_space byte "    ", 0
 	endl byte 0Dh, 0Ah, 0
 
 
+	hInput HANDLE ?
+	hOutput HANDLE ?
+
 .code
 main proc
-	mov edx, offset msg1
-	mov ecx, sizeof msg1
+	call GetHandle
+	push offset msg1
 	call WriteString
 
-	call ReadDec
-	mov num, eax
+	push offset num
+	call ReadString
+	push offset num
+	call atoi
 	
-	mov edx, offset msg2
-	mov ecx, sizeof msg2
+	push offset msg2
 	call WriteString
 
-	push num
+	push eax
 	call fibo
 
-	mov ecx, 0
+	push 0
 	call ExitProcess
 
 main endp
@@ -47,7 +56,7 @@ fibo proc
 
 .code
 	push ebp
-	mov ebp,esp
+	mov ebp, esp
 	sub esp, 4
 	
 	mov dword ptr [num1], 30h
@@ -55,22 +64,18 @@ fibo proc
 
 
 	;print f[0], f[1]
-	mov edx, offset num1
-	mov ecx, sizeof num1
+	push offset num1
 	call WriteString
-	mov edx, offset white_space
-	mov ecx, sizeof white_space
+	push offset white_space
 	call WriteString
 
 	mov ecx, dword ptr [ebp + 8]
 	cmp ecx, 1
 	je quit
 	
-	mov edx, offset num2
-	mov ecx, sizeof num2
+	push offset num2
 	call WriteString
-	mov edx, offset white_space
-	mov ecx, sizeof white_space
+	push offset white_space
 	call WriteString
 
 	mov ecx, dword ptr [ebp + 8]
@@ -85,20 +90,22 @@ L1:
 	push offset num1
 	call bigsum
 
-	mov edx, eax
+	push eax
 	call WriteString
 
-	mov edx, offset white_space
-	mov ecx, sizeof white_space
+	push offset white_space
 	call WriteString
 
 	;num1 = num2
-	mov esi, dword ptr [num2]
-	mov dword ptr [num1], esi
+	push offset num2
+	push offset num1
+	call strcpy	
 
 	;num2 = sum
-	mov esi, [eax]
-	mov dword ptr [num2], esi
+	push eax
+	push offset num2
+	call strcpy	
+	
 
 	inc dword ptr [ebp - 4]
 	mov edx, dword ptr [ebp - 4]
@@ -112,6 +119,34 @@ quit:
 	ret 4
 
 fibo endp
+
+strcpy PROC 
+	push ebp
+	mov ebp, esp
+	pushad
+
+	mov  edx, dword ptr [ebp + 12] ; source
+	mov  cl, byte ptr [edx]
+	test cl, cl
+	mov  eax, dword ptr [ebp+8] ; destination
+	je L2
+
+L1:
+	mov  byte ptr [eax], cl
+	mov  cl, byte ptr [edx+1]
+	inc  eax
+	inc  edx
+	test cl, cl
+	jne   L1
+
+L2:
+	mov byte ptr [eax], 0
+	popad
+	pop ebp
+	ret 8
+	
+strcpy ENDP
+
 
 
 bigsum proc
@@ -218,6 +253,78 @@ L7:
 bigsum endp
 
 
+GetHandle proc 
+	push STD_INPUT_HANDLE 
+	call GetStdHandle 
+	mov hInput, eax 
+
+	push STD_OUTPUT_HANDLE
+	call GetStdHandle
+	mov hOutput, eax 
+	ret
+GetHandle endp 
+
+
+ReadString proc 
+	push ebp
+	mov ebp, esp
+	sub esp,4 
+	pushad 
+
+	push NULL					; pInputControl = NULL 
+	lea ebx, dword ptr [ebp - 4]	
+	push ebx 					; lpNumberOfCharsRead = ebp - 4
+	push MAXBUF 				; nNumberOfCharsToRead = MAXBUF 
+	push dword ptr [ebp + 8]	; lpBuffer = offset string 
+	push hInput 			; hConsoleInput = hInput
+	call ReadConsole 
+
+	;search line feed (0Dh) character and remove it 
+	mov edi, dword ptr [ebp + 8]
+	mov ecx, MAXBUF 
+	cld 						; search forward 
+	mov al, 0Dh 
+	repne scasb 
+	jne L2 						; if not found 0Dh 
+	;sub dword ptr [ebp - 4],2 	; 
+	dec edi 
+	jmp L3 
+L2:
+	mov edi, dword ptr [ebp + 8]
+	add edi, MAXBUF 
+L3:	mov byte ptr [edi], 0 		; add null byte 
+	
+	popad 
+	add esp, 4
+	pop ebp 
+	ret 4
+ReadString endp
+
+
+WriteString proc 
+	push ebp
+	mov ebp, esp 
+	sub esp, 4 
+	pushad 
+	;get length 
+	push dword ptr [ebp + 8]
+	call Strlen 
+
+	push NULL 						; lpReserved = NULL 
+	lea ebx, dword ptr [ebp - 4]	
+	push ebx 						; lpNumberOfCharsWritten = ebp - 4
+	push eax 						; nNumberOfCharsToWrite = eax = Str_length
+	push dword ptr [ebp + 8]		; lpBuffer = offset string 
+	push hOutput 				; hConsoleOutput = hOutput
+	call WriteConsole 				
+
+	popad 
+	add esp, 4
+	pop ebp 
+	ret 4
+WriteString endp 
+
+
 Strlen proc 
 	; return eax = length 
 	push ebp 
@@ -228,7 +335,7 @@ Strlen proc
 	mov eax, 0
 L1:
 	cmp byte ptr [edi], 0		; if [edi] = NULL => break
-	je L2 
+	jz L2 
 	inc edi 
 	inc eax 
 	jmp L1 
@@ -236,6 +343,50 @@ L2:
 	pop edi  
 	pop ebp 
 	ret 4
-Strlen endp 
+Strlen endp
+
+atoi proc
+	push ebp
+	mov ebp, esp
+	
+	push ebx
+	push ecx
+	push edx
+	push esi
+	
+    mov esi, DWORD PTR [ebp + 8]
+    mov eax, 0
+    mov ecx, 0
+	
+multiLoop:
+    xor ebx, ebx
+    mov bl, BYTE PTR [esi + ecx]	;search 
+    cmp bl, 30h    ;ASCII '0'
+    jl next
+    cmp bl, 39h    ;ASCII '9'
+    jg next
+
+    sub bl, 30h    ;convert ASCII to Integer
+    add eax, ebx		;result = eax
+    mov ebx, 10		;ebx = 10
+    mul ebx			;eax *= ebx
+    inc ecx
+    jmp multiLoop
+	
+next:
+    cmp ecx, 0		;if ecx == 0 => done
+    je done
+    mov ebx, 10	
+    div ebx
+	
+done:
+    pop esi
+	pop edx
+	pop ecx
+	pop ebx
+	pop ebp
+    ret 4
+	
+atoi endp
 
 end main

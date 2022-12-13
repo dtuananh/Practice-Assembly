@@ -1,9 +1,9 @@
 section .data
-    SYS_EXIT EQU 1  
+    SYS_EXIT EQU 1
     SYS_READ EQU 3
     SYS_WRITE EQU 4
 
-    STDIN EQU 0 
+    STDIN EQU 0
     STDOUT EQU 1
 
     msg1 db "S = ", 0x0
@@ -12,7 +12,7 @@ section .data
 
     white_space db 0x20, 0x0
     endl db 0xa, 0xd, 0x0
-    
+
     tmp dd 0
     count dd 0
 
@@ -59,18 +59,18 @@ _find_pos:
 	pushad
 
 	mov edx, [len2]	;edx = length of substring
-	sub edx,2		
+	sub edx,2
 
 	mov ecx, [len1]	;ecx = length of string
     dec ecx
 	mov edi, 0		;edi(i) = 0
-	mov ebx, edi	
+	mov ebx, edi
 	.L1:		;for1
 		mov esi, 0		;esi(j) = 0
 		mov al, [buf1+edi]
-		cmp [buf2+esi], al	
-		jnz .quit2		;if buf1[i] != buf2[0] jump to quit2
-		mov [tmp], ecx	
+		cmp [buf2+esi], al
+		jnz .quit3		;if buf1[i] != buf2[0] jump to quit2
+		mov [tmp], ecx
 		mov ebx, edi	;ebx = i
 		mov ecx, [len2]
         dec ecx
@@ -78,9 +78,9 @@ _find_pos:
 			mov al, [buf1+ebx]
 			cmp al, [buf2+esi]
 			jnz .quit2		;if buf1[i] != buf[j] jump to quit2
-			cmp esi, edx	
+			cmp esi, edx
 			jnz .quit1		;if j != 1 jump to quit1
-			
+
 			mov ebx, [count]
 			mov esi, res		;point esi to res[0]
 			mov [esi+4*ebx], edi	;res[count] = edi(i)
@@ -90,8 +90,9 @@ _find_pos:
 			inc esi		;j++
 			inc ebx		;i++
 			loop .L2
+	.quit2:
 	mov ecx, [tmp]
-    .quit2:
+    .quit3:
     inc edi		;i++
     loop .L1
 
@@ -106,7 +107,7 @@ _find_pos:
 .quit:
 	mov eax, [count]
 	call _iprint
-	
+
     mov eax, endl
     call _sprint
 
@@ -125,7 +126,7 @@ _find_pos:
     call _sprint
 
 	popad
-	ret 
+	ret
 
 
 
@@ -193,7 +194,7 @@ _iprint:
 
     pop esi
     pop edx
-    pop ecx 
+    pop ecx
     pop eax
     ret
 
@@ -216,4 +217,3 @@ _exit:
     mov eax, SYS_EXIT
     xor ebx, ebx        ;return 0
     int 0x80
-    

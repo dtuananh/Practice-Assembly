@@ -2,7 +2,7 @@ sys_exit equ 1
 sys_read equ 3
 sys_write equ 4
 
-stdin equ 0 
+stdin equ 0
 stdout equ 1
 
 MAXBUF EQU 20
@@ -74,7 +74,7 @@ sub ecx, 2
 	push num2
 	push num1
 	call bigsum
-	
+
 	push eax
 	call WriteString
 
@@ -82,11 +82,14 @@ sub ecx, 2
 	call WriteString
 
 ;num1 = num2
-	mov esi, [num2]
-	mov [num1], esi
+	push num2
+  push num1
+  call strcpy
+
 ;num2 = sum
-	mov esi, [eax]
-	mov [num2], esi
+	push eax
+  push num2
+  call strcpy
 
 	loop .L1
 
@@ -95,20 +98,47 @@ sub ecx, 2
 	pop ebp
 	ret 4
 
+strcpy:
+  push ebp
+  mov ebp, esp
+  pushad
+
+  mov  edx, [ebp + 12] ; source
+  mov  cl, byte [edx]
+  test cl, cl
+  mov  eax, [ebp+8] ; destination
+  je .L2
+
+  .L1:
+  mov  byte [eax], cl
+  mov  cl, byte [edx+1]
+  inc  eax
+  inc  edx
+  test cl, cl
+  jne   .L1
+
+  .L2:
+  mov byte [eax], 0
+  popad
+  pop ebp
+  ret 8
+
 
 bigsum:
     push ebp
 	mov ebp, esp
-	sub esp, 8	
-	push ecx	
-	
+	sub esp, 8
+	push ecx
+
 	mov esi, [ebp + 8]		;offset num1
 	mov edi, [ebp + 12]		;offset num2
 
+xor eax, eax
 	push esi
 	call strlen
 	mov [ebp - 4], eax		;len1
 
+xor eax, eax
 	push edi
 	call strlen
 	mov [ebp - 8], eax		;len2
@@ -162,10 +192,10 @@ bigsum:
 	mov edx, [ebp + 16]
 	add edx, MAXBUF
 	mov bh, 0			;carry = bh = 0
-	
+
 	mov ecx, [ebp - 4]
 	.L5:
-		mov ah, 0		
+		mov ah, 0
 		mov al, byte [esi]	;al = num1
 		add al, bh				;al += carry
 		aaa			;if af = 1 => ah = 1
@@ -182,10 +212,10 @@ bigsum:
 		dec edi
 		dec esi
 		loop .L5
-	cmp bh, 30h		
+	cmp bh, 30h
 	jne .L6			;if bh != 0 jmp to L6
-	inc edx		
-	jmp .L7			
+	inc edx
+	jmp .L7
 .L6:
 	mov byte [edx], bh		;add carry = '1' to begin of sum
 .L7:
@@ -218,6 +248,7 @@ WriteString:
     mov ebp, esp
     pushad
 
+xor eax,eax
     mov esi, [ebp + 8]
     push esi
     call strlen
@@ -237,9 +268,9 @@ strlen:
     push ebp
     mov ebp, esp
     push edi
-    
+
     mov edi, [ebp + 8]
-    mov eax, 0
+    mov ecx, 0
 .L1:
     cmp byte [edi], 0
     je .L2
@@ -260,30 +291,30 @@ _exit:
 atoi:
    ; int result = 0
    mov eax, 0              ; Set initial total to 0
-     
-.convert:
-   ;mov input[i] to esi 
+
+convert:
+   ;mov input[i] to esi
    movzx esi, byte [edi]   ; Get the current character
-   cmp esi, 0Ah          ; Check for \n
-   je .done
-   test esi, esi           ; Check for end of string 
-   je .done
-   
-   cmp esi, 30h             ; Anything less than 0 is invalid
-   jl .error
-    
-   cmp esi, 39h          	; Anything greater than 9 is invalid
-   jg .error
-   
-   sub esi, 30h             ; Convert from ASCII to decimal 
+   cmp esi, 0x0A          ; Check for \n
+   je done
+   test esi, esi           ; Check for end of string
+   je done
+
+   cmp esi, 48             ; Anything less than 0 is invalid
+   jl error
+
+   cmp esi, 57             ; Anything greater than 9 is invalid
+   jg error
+
+   sub esi, 48             ; Convert from ASCII to decimal
    imul eax, 10            ; Multiply total by 10
    add eax, esi            ; Add current digit to total
-    
-   inc edi                 ; Get the address of the next character
-   jmp .convert
 
-.error:
+   inc edi                 ; Get the address of the next character
+   jmp convert
+
+error:
    mov eax, -1             ; Return -1 on error
- 
-.done:
+
+done:
    ret                     ; Return total or error code

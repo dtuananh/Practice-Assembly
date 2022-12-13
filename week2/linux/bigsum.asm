@@ -61,6 +61,7 @@ bigsum:
     dec eax
 	mov [ebp - 4], eax		;len1
 
+xor eax, eax
 	push edi
 	call strlen
     dec eax
@@ -191,7 +192,7 @@ strlen:
     push edi
     
     mov edi, [ebp + 8]
-    mov eax, 0
+    mov ecx, 0
 .L1:
     cmp byte [edi], 0
     je .L2

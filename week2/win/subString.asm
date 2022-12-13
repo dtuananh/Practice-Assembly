@@ -1,118 +1,253 @@
 .386
-.model	flat, stdcall
-.stack	4096
-ExitProcess proto, dwExitCode:dword
+.model flat, stdcall
+.stack 4096
+option Casemap:None
 
-include Irvine32.inc
+include D:\masm32\include\windows.inc
+include D:\masm32\include\kernel32.inc
+include D:\masm32\include\masm32.inc
+includelib D:\masm32\lib\kernel32.lib
+includelib D:\masm32\lib\masm32.lib
+
+NULL equ 0
 
 .data
-	msg1 byte "S = ", 0
-	msg2 byte "C = ", 0
-	not_found byte "Not found!", 0
-
-	buf1 byte 100 dup(0), 0
-	len1 dword ?
-	buf2 byte 10 dup(0), 0
-	len2 dword ?
+	msg1 db "S = ", 0
+	msg2 db "C = ", 0
+	not_found db "Not found!", 0
 	
-	res dword 20 dup(?)
-	tmp dword 0
-	count dword 0
-
+	String db 100 DUP(0), 0
+	SubString db 10 DUP(0), 0
+	res dd 20 DUP(?)
+	
+	len1 dd ?
+	len2 dd ?
+	count dd 0
+	tmp dd 0
+	
+	endl db 0dh, 0ah, 0
+	white_space db 20h, 0
+	
+	hInput HANDLE ?
+	hOutput HANDLE ?
 
 .code
 main proc
-
-	mov edx, offset msg1
+	; to get handle
+	call GetHandle
+	
+	; print "S = "
+	push offset msg1
 	call WriteString
-
-	mov edx, offset buf1
-	mov ecx, sizeof buf1
+	; read String from user
+	push offset String
 	call ReadString
+	
+	;print "C = "
+	push offset msg2
+	call WriteString
+	; read SubString from user
+	push offset SubString
+	call ReadString
+	
+	push offset String
+	call Strlen
+	sub eax, 2		;remove '\0' and '0Ah'
 	mov len1, eax
-
-	mov edx, offset msg2
-	call WriteString
-
-	mov edx, offset buf2
-	mov ecx, sizeof buf2
-	call ReadString
+	push offset SubString
+	call Strlen
+	sub eax, 2		;remove '\0' and '0Ah'
 	mov len2, eax
-
+	
 	call find_pos
-
-	mov ecx, 0
+	
+	
+	push NULL
 	call ExitProcess
-
 main endp
 
 
 find_pos proc
-
 	pushad
 
-	mov edx, len2	;edx = length of substring
-	dec edx		
+	mov edx, len2
+	dec edx
 
-	mov ecx, len1	;ecx = length of string
-	mov edi, 0		;edi(i) = 0
-	mov ebx, edi	
-	L1:		;for1
-		mov esi, 0		;esi(j) = 0
-		mov al, buf1[edi]
-		cmp buf2[esi], al	
-		jnz quit2		;if buf1[i] != buf2[0] jump to quit2
-		mov tmp, ecx	
-		mov ebx, edi	;ebx = i
+	mov ecx, len1
+	mov edi, 0
+	mov ebx, edi
+	L1:
+		mov esi, 0
+		mov al, String[edi]
+		cmp SubString[esi], al
+		jnz quit3
+		mov tmp, ecx
+		mov ebx, edi
 		mov ecx, len2
-		L2:		;for2
-			mov al, buf1[ebx]
-			cmp al, buf2[esi]
-			jnz quit2		;if buf1[i] != buf[j] jump to quit2
-			cmp esi, edx	
-			jnz quit1		;if j != 1 jump to quit1
+		L2:
+			mov al, String[ebx]
+			cmp al, SubString[esi]
+			jnz quit2
+			cmp esi, edx
+			jnz quit1
 			
 			mov ebx, count
-			mov esi, offset res		;point esi to res[0]
-			mov [esi+4*ebx], edi	;res[count] = edi(i)
+			mov esi, offset res
+			mov [esi+4*ebx], edi
 			inc ebx
-			mov count, ebx			;count++
+			mov count, ebx
 			quit1:
-			inc esi		;j++
-			inc ebx		;i++
+			inc esi
+			inc ebx
 			loop L2
+	quit2:
 		mov ecx, tmp
-		quit2:
-		inc edi		;i++
+		quit3:
+		inc edi
 		loop L1
 
 	cmp count, 0
 	jnz quit
-	mov edx, offset not_found
-	mov ecx, sizeof not_found
+	push offset not_found
 	call WriteString
 	popad
 	ret
 
-quit:
-	mov eax, count
-	call WriteDec
-	call Crlf
+	quit:
+		push count 
+		call WriteNumber
+	
+		push offset endl
+		call WriteString
+	
+		mov ecx, count
+		mov edx, 0
+		L3:
+			mov esi, offset res
+			push [esi+4*edx]
+			call WriteNumber
+			push offset white_space
+			call WriteString
+			inc edx
+			loop L3
 
-	mov ecx, count
-	mov edx, 0
-	L3:	;for	(print position of substring in string)
-		mov esi, offset res
-		mov eax, [esi+4*edx]
-		call WriteDec
-		mov al, 20h
-		call WriteChar
-		inc edx
-		loop L3
-
-	popad
-	ret 
-
+		popad
+		ret 
+	
 find_pos endp
+
+
+GetHandle proc
+	push STD_INPUT_HANDLE
+	call GetStdHandle
+	mov hInput, eax		;hInput = eax
+
+	push STD_OUTPUT_HANDLE
+	call GetStdHandle
+	mov hOutput, eax		;hOutput = eax
+	
+	ret
+GetHandle endp
+
+
+ReadString proc
+	push ebp
+	mov ebp, esp
+	sub esp, 4
+	pushad
+	
+	push NULL						;pInputControl = NULL
+	lea ebx, DWORD PTR [ebp - 4]
+	push ebx						;lpNumberOfCharsRead = [ebp - 4]
+	push 100						;nNumberOfCharsToRead = MAXBUF = 100
+	push DWORD PTR [ebp + 8] 		;lpBuffer = [ebp + 8]
+	push hInput						;hConsoleInput
+	call ReadConsole
+	
+	popad
+	add esp, 4
+	pop ebp
+	ret 4
+	
+ReadString endp
+
+
+WriteString proc
+	push ebp
+	mov ebp, esp
+	sub esp, 4			;allocated space for lpNumberOfCharsWritten
+	pushad				;push EAX, ECX, EDX, EBX, EBP, ESP, EBP, ESI, EDI onto the stack
+	
+	push DWORD PTR [ebp + 8]
+	call Strlen
+	
+	push NULL							;lpReserved = NULL
+	lea ebx, DWORD PTR [ebp - 4]		
+	push ebx							;lpNumberOfCharsWritten = [ebp - 4]
+	push eax							;nNumberOfCharsToWrite = eax = Strlen
+	push DWORD PTR [ebp + 8]			;*lpBuffer = [ebp + 8]
+	push hOutput							;hConsoleOutput
+	call WriteConsole
+	
+	popad
+	add esp, 4
+	pop ebp
+	ret 4
+	
+WriteString endp
+
+
+WriteNumber proc
+	push ebp
+	mov ebp, esp
+    pushad
+    mov ecx, 0  ;count digits
+	mov eax, DWORD PTR [ebp + 8]
+divLoop:
+    inc ecx
+    mov edx, 0
+    mov esi, 10     ;divisor
+    idiv esi		
+    add edx, 30h	;convert to integer
+    push edx		;push onto stack
+    cmp eax, 0		;if eax == 0 => break
+    jnz divLoop
+	
+printLoop:
+    dec ecx
+    mov eax, esp
+	push eax
+	call WriteString
+    pop eax
+	inc ebx
+    cmp ecx, 0
+    jnz printLoop
+	
+	popad
+	pop ebp
+    ret 4
+	
+WriteNumber endp
+
+
+Strlen proc
+	push ebp
+	mov ebp, esp
+	push edi
+	
+	mov edi, DWORD PTR [ebp + 8]
+	mov eax, 0
+L1:
+	cmp BYTE PTR [edi], NULL		;if [edi] == NULL => break
+	je L2
+	inc edi
+	inc eax
+	jmp L1
+L2:
+	pop edi
+	pop ebp
+	ret 4
+	
+Strlen endp
 
 end main
