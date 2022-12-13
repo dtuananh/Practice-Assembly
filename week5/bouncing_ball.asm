@@ -288,30 +288,50 @@ MoveBall proc
     call GetClientRect
     mov eax, lpRect.right
     cmp brPoint.x, eax
-    jg MEET_RIGHT_LEFT
+    jg MEET_RIGHT
 
     mov eax, lpRect.bottom
     cmp brPoint.y, eax
-    jg MEET_BOTTOM_TOP
+    jg MEET_BOTTOM
 
     cmp tlPoint.x, 0
-    jl MEET_RIGHT_LEFT
+    jl MEET_LEFT
 
     cmp tlPoint.y, 0
-    jl MEET_BOTTOM_TOP
+    jl MEET_TOP
 
     jmp MEET_NONE
 
-    MEET_RIGHT_LEFT:
-        mov eax, vectorX
-        neg eax
-        mov vectorX, eax
+    MEET_LEFT:
+        mov tlPoint.x, 0
+        mov eax, tlPoint.x
+        add eax, BALL_SIZE
+        mov brPoint.x, eax
+        neg vectorX
         jmp MEET_NONE
 
-    MEET_BOTTOM_TOP:
-        mov eax, vectorY
-        neg eax
-        mov vectorY, eax
+    MEET_TOP:
+        mov tlPoint.y, 0
+        mov eax, tlPoint.y
+        add eax, BALL_SIZE
+        mov brPoint.y, eax
+        neg vectorY
+        jmp MEET_NONE
+
+    MEET_RIGHT:
+        mov eax, lpRect.right
+        mov brPoint.x, eax
+        sub eax, BALL_SIZE
+        mov tlPoint.x, eax
+        neg vectorX
+        jmp MEET_NONE
+
+    MEET_BOTTOM:
+        mov eax, lpRect.bottom
+        mov brPoint.y, eax
+        sub eax, BALL_SIZE
+        mov tlPoint.y, eax
+        neg vectorY
         jmp MEET_NONE
 
     MEET_NONE:
