@@ -85,8 +85,20 @@ MAXBUF EQU 255
 
 	;DATA_DIRECTORIES
 	DataDirectories	db	0Ah, 0Ah, "******* DATA DIRECTORIES *******", 0
-    ExportDir		db	0Ah, "Export Directory Address:	", 0
-	ImportDir		db	0Ah, "Import Directory Address:	", 0
+    ExportDir		db	0Ah, "Export Directory RVA:			", 0
+	ImportDir		db	0Ah, "Import Directory RVA:			", 0
+	ResourceDir		db	0Ah, "Resource Directory RVA:			", 0
+	ExceptionDir	db	0Ah, "Exception Directory RVA:		", 0
+	SecurityDir		db	0Ah, "Security Directory RVA:			", 0
+	RelocationDir	db  0Ah, "Relocation Directory RVA:		", 0
+	DebugDir		db	0Ah, "Debug Directory RVA:			", 0
+	ArchDir			db	0Ah, "Architecture Directory RVA:		", 0
+	TLSDir			db	0Ah, "TLS Directory RVA:			", 0
+	ConfigDir		db	0Ah, "Configuration Directory RVA:		", 0
+	BoundImpDir		db	0Ah, "Bound Import Directory RVA:		", 0
+	ImportAddTable	db	0Ah, "Import Address Table Directory RVA:	", 0
+	DelayImpDir		db	0Ah, "Delay Import Directory RVA:		", 0
+	dotNETMetaDataDir	db	0Ah, ".NET MetaData Directory RVA:		", 0
 	Sz			db	";		Size:	", 0
 
 	;SECTION_HEADERS
@@ -348,7 +360,6 @@ main proc
 	add lpFileBuffer, 16h
 	mov eax, lpFileBuffer
 	mov edi, dword ptr [eax]
-	mov e_fileAddress, edi
 	call WriteHex
 	push offset e_lfanew
 	call WriteString
@@ -787,7 +798,103 @@ main proc
 	mov importRVA, edi			;save ImportDirectoryRVA
 	call WriteHex
 
-	;Export Directory Size 
+	;Import Directory Size 
+	push offset Sz
+	call WriteString
+	add lpFileBuffer, 4
+	mov eax, lpFileBuffer
+	mov edi, dword ptr [eax]
+	call WriteHex
+
+	;Resource Directory RVA
+	push offset ResourceDir
+	call WriteString
+	add lpFileBuffer, 4
+	mov eax, lpFileBuffer
+	mov edi, dword ptr [eax]
+	call WriteHex
+
+	;Resource Directory Size
+	push offset Sz
+	call WriteString
+	add lpFileBuffer, 4
+	mov eax, lpFileBuffer
+	mov edi, dword ptr [eax]
+	call WriteHex
+
+	;Exception Directory RVA
+	push offset ExceptionDir
+	call WriteString
+	add lpFileBuffer, 4
+	mov eax, lpFileBuffer
+	mov edi, dword ptr [eax]
+	call WriteHex
+
+	;Exception Directory Size
+	push offset Sz
+	call WriteString
+	add lpFileBuffer, 4
+	mov eax, lpFileBuffer
+	mov edi, dword ptr [eax]
+	call WriteHex
+
+	;Security Directory RVA
+	push offset SecurityDir
+	call WriteString
+	add lpFileBuffer, 4
+	mov eax, lpFileBuffer
+	mov edi, dword ptr [eax]
+	call WriteHex
+
+	;Security Directory Size
+	push offset Sz
+	call WriteString
+	add lpFileBuffer, 4
+	mov eax, lpFileBuffer
+	mov edi, dword ptr [eax]
+	call WriteHex
+
+	;Relocation Directory RVA
+	push offset RelocationDir
+	call WriteString
+	add lpFileBuffer, 4
+	mov eax, lpFileBuffer
+	mov edi, dword ptr [eax]
+	call WriteHex
+
+	;Relocation Directory Size
+	push offset Sz
+	call WriteString
+	add lpFileBuffer, 4
+	mov eax, lpFileBuffer
+	mov edi, dword ptr [eax]
+	call WriteHex
+
+	;Debug Directory RVA
+	push offset DebugDir
+	call WriteString
+	add lpFileBuffer, 4
+	mov eax, lpFileBuffer
+	mov edi, dword ptr [eax]
+	call WriteHex
+
+	;Debug Directory Size
+	push offset Sz
+	call WriteString
+	add lpFileBuffer, 4
+	mov eax, lpFileBuffer
+	mov edi, dword ptr [eax]
+	call WriteHex
+
+	;Architecture Directory RVA
+	push offset ArchDir
+	call WriteString
+	add lpFileBuffer, 4
+	mov eax, lpFileBuffer
+	mov edi, dword ptr [eax]
+	call WriteHex
+
+	;Architecture Directory Size
 	push offset Sz
 	call WriteString
 	add lpFileBuffer, 4
@@ -795,6 +902,101 @@ main proc
 	mov edi, dword ptr [eax]
 	call WriteHex
 	
+	;TLS Directory RVA
+	push offset TLSDir
+	call WriteString
+	add lpFileBuffer, 12
+	mov eax, lpFileBuffer
+	mov edi, dword ptr [eax]
+	call WriteHex
+
+	;TLS Directory Size
+	push offset Sz
+	call WriteString
+	add lpFileBuffer, 4
+	mov eax, lpFileBuffer
+	mov edi, dword ptr [eax]
+	call WriteHex
+
+	;Configuration Directory RVA
+	push offset ConfigDir
+	call WriteString
+	add lpFileBuffer, 4
+	mov eax, lpFileBuffer
+	mov edi, dword ptr [eax]
+	call WriteHex
+
+	;Configuration Directory Size
+	push offset Sz
+	call WriteString
+	add lpFileBuffer, 4
+	mov eax, lpFileBuffer
+	mov edi, dword ptr [eax]
+	call WriteHex
+
+	;Bound Import Directory RVA
+	push offset BoundImpDir
+	call WriteString
+	add lpFileBuffer, 4
+	mov eax, lpFileBuffer
+	mov edi, dword ptr [eax]
+	call WriteHex
+
+	;Bound Import Directory Size
+	push offset Sz
+	call WriteString
+	add lpFileBuffer, 4
+	mov eax, lpFileBuffer
+	mov edi, dword ptr [eax]
+	call WriteHex
+
+	;Import Address Table Directory RVA
+	push offset ImportAddTable
+	call WriteString
+	add lpFileBuffer, 4
+	mov eax, lpFileBuffer
+	mov edi, dword ptr [eax]
+	call WriteHex
+
+	;Import Address Table Directory Size
+	push offset Sz
+	call WriteString
+	add lpFileBuffer, 4
+	mov eax, lpFileBuffer
+	mov edi, dword ptr [eax]
+	call WriteHex
+
+	;Delay Import Directory RVA
+	push offset DelayImpDir
+	call WriteString
+	add lpFileBuffer, 4
+	mov eax, lpFileBuffer
+	mov edi, dword ptr [eax]
+	call WriteHex
+
+	;Delay Import Directory Size
+	push offset Sz
+	call WriteString
+	add lpFileBuffer, 4
+	mov eax, lpFileBuffer
+	mov edi, dword ptr [eax]
+	call WriteHex
+
+	;.NET MetaData Directory RVA
+	push offset dotNETMetaDataDir
+	call WriteString
+	add lpFileBuffer, 4
+	mov eax, lpFileBuffer
+	mov edi, dword ptr [eax]
+	call WriteHex
+
+	;.NET MetaData Directory Size
+	push offset Sz
+	call WriteString
+	add lpFileBuffer, 4
+	mov eax, lpFileBuffer
+	mov edi, dword ptr [eax]
+	call WriteHex
 
 ;SECTION_HEADERS
 	push offset SectionHeader
