@@ -192,7 +192,7 @@ strlen:
     push edi
     
     mov edi, [ebp + 8]
-    mov ecx, 0
+    mov eax, 0
 .L1:
     cmp byte [edi], 0
     je .L2
