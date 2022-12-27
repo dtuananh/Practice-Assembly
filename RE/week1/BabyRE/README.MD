@@ -1,17 +1,20 @@
 ## BabyRE
 
 **Kiểm tra file**
+
 ![alt](https://github.com/dtuananh/Practice-Assembly/blob/main/RE/week1/BabyRE/kiemtra.png)
 
 Ta có thể thấy đây là 1 file PE32
 
 **Chạy thử**
+
 ![alt](https://github.com/dtuananh/Practice-Assembly/blob/main/RE/week1/BabyRE/chaythu.png)
 
 Có thể thấy chương trình yêu cầu chúng ta nhập đầu vào là key sau đó trả về kết quả là flag. 
 Mình có thử nhập một vài testcase thì thấy chương trình nhận đầu vào là năm số để làm key giải mã.
 
 **Phân tích file**
+
 ![alt](https://github.com/dtuananh/Practice-Assembly/blob/main/RE/week1/BabyRE/ida1.png)
 
 Sử dụng IDA Pro để phân tích file
