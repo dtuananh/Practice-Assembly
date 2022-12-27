@@ -81,6 +81,7 @@ int main ()
 ```
 
 **Kết quả**
+
 ![alt](https://github.com/dtuananh/Practice-Assembly/blob/main/RE/week1/BabyRE/ketqua.png)
 
 Flag:   `flag{easy_baby_challenge}`
